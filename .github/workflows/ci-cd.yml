@@ -39,4 +39,9 @@ jobs:
       - name: Start IIS Site
         run: |
           Import-Module WebAdministration
-          Start-WebSite -Name "MyAspNetApp"
+          if (Get-Website -Name "MyAspNetApp") {
+            Start-WebSite -Name "MyAspNetApp"
+          } else {
+            Write-Host "Site 'MyAspNetApp' not found. Please create it in IIS."
+            exit 1
+          }
