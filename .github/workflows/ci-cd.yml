@@ -29,12 +29,31 @@ jobs:
       - name: Stop IIS Site
         run: |
           Import-Module WebAdministration
-          if (Get-Website -Name "MyAspNetApp") { Stop-WebSite -Name "MyAspNetApp" }
+          if (Get-Website -Name "MyAspNetApp") {
+            Stop-WebSite -Name "MyAspNetApp"
+          } else {
+            Write-Host "Site 'MyAspNetApp' not found, skipping stop."
+          }
 
       - name: Deploy to IIS
         run: |
           Remove-Item -Recurse -Force "C:\inetpub\wwwroot\myapp\*" -ErrorAction SilentlyContinue
           Copy-Item -Path "./publish/*" -Destination "C:\inetpub\wwwroot\myapp" -Recurse -Force
+          # Write web.config with proper encoding
+          $webConfig = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <location path="." inheritInChildApplications="false">
+              <system.webServer>
+                <handlers>
+                  <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+                </handlers>
+                <aspNetCore processPath="dotnet" arguments=".\WebApplication1.dll" stdoutLogEnabled="true" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+              </system.webServer>
+            </location>
+          </configuration>
+          "@
+          Set-Content -Path "C:\inetpub\wwwroot\myapp\web.config" -Value $webConfig -Encoding UTF8
 
       - name: Start IIS Site
         run: |
