@@ -1,51 +1,42 @@
 name: CI/CD for ASP.NET Core to IIS
 
-# Trigger on push to main branch
 on:
   push:
     branches: [ "main" ]
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted # Use your self-hosted Windows runner
+    runs-on: self-hosted
 
     steps:
-      # Checkout the repository code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set up .NET SDK
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x' # Match your project's .NET version
+          dotnet-version: '8.0.x'
 
-      # Restore dependencies
       - name: Restore dependencies
         run: dotnet restore
 
-      # Build the project
       - name: Build
         run: dotnet build --configuration Release --no-restore
 
-      # Publish the project
       - name: Publish
         run: dotnet publish --configuration Release --output ./publish
 
-      # Stop IIS site (optional, to avoid file locks)
       - name: Stop IIS Site
         run: |
           Import-Module WebAdministration
-          Stop-WebSite -Name "MyAspNetApp" # Replace with your IIS site name
+          if (Get-Website -Name "MyAspNetApp") { Stop-WebSite -Name "MyAspNetApp" }
 
-      # Deploy to IIS folder
       - name: Deploy to IIS
         run: |
           Remove-Item -Recurse -Force "C:\inetpub\wwwroot\myapp\*" -ErrorAction SilentlyContinue
           Copy-Item -Path "./publish/*" -Destination "C:\inetpub\wwwroot\myapp" -Recurse -Force
 
-      # Start IIS site
       - name: Start IIS Site
         run: |
           Import-Module WebAdministration
-          Start-WebSite -Name "MyAspNetApp" # Replace with your IIS site name
+          Start-WebSite -Name "MyAspNetApp"
