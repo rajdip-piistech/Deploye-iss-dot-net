@@ -39,8 +39,8 @@ jobs:
         run: |
           Remove-Item -Recurse -Force "C:\inetpub\wwwroot\myapp\*" -ErrorAction SilentlyContinue
           Copy-Item -Path "./publish/*" -Destination "C:\inetpub\wwwroot\myapp" -Recurse -Force
-          # Write web.config with proper encoding
-          $webConfig = @"
+          # Write web.config using Out-File for better control
+          @"
           <?xml version="1.0" encoding="utf-8"?>
           <configuration>
             <location path="." inheritInChildApplications="false">
@@ -52,8 +52,7 @@ jobs:
               </system.webServer>
             </location>
           </configuration>
-          "@
-          Set-Content -Path "C:\inetpub\wwwroot\myapp\web.config" -Value $webConfig -Encoding UTF8
+          "@ | Out-File -FilePath "C:\inetpub\wwwroot\myapp\web.config" -Encoding UTF8
 
       - name: Start IIS Site
         run: |
